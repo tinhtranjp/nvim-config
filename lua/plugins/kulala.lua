@@ -5,5 +5,10 @@ return {
 		"http",
 	},
 
-	opts = {},
+	opts = {
+		kulala_keymaps = {
+			["Previous tab"] = false,
+			["Next tab"] = false,
+		},
+	},
 }

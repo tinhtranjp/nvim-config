@@ -1,8 +1,35 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
+vim.keymap.set("i", "jk", "<Esc>", { desc = "Exit insert mode" })
+vim.keymap.set("i", "kj", "<Esc>", { desc = "Exit insert mode" })
+vim.keymap.set("n", "<C-Left>", "5<C-w><", { desc = "Resize left" })
+vim.keymap.set("n", "<C-Right>", "5<C-w>>", { desc = "Resize right" })
+vim.keymap.set("n", "<C-Up>", "5<C-w>+", { desc = "Resize up" })
+vim.keymap.set("n", "<C-Down>", "5<C-w>-", { desc = "Resize down" })
+vim.opt.timeoutlen = 300
 local map = vim.keymap.set
 
+vim.keymap.set("n", "<leader>dy", function()
+	local diagnostics = vim.diagnostic.get(0, {
+		lnum = vim.api.nvim_win_get_cursor(0)[1] - 1,
+	})
+
+	if #diagnostics == 0 then
+		vim.notify("Không có diagnostic ở dòng này")
+		return
+	end
+
+	local message = table.concat(
+		vim.tbl_map(function(d)
+			return d.message
+		end, diagnostics),
+		"\n"
+	)
+
+	vim.fn.setreg("+", message)
+	vim.notify("Đã copy lỗi")
+end, { desc = "Copy diagnostic" })
 -- =========================================================
 -- General
 -- =========================================================
@@ -115,7 +142,20 @@ map("n", "<leader>bd", "<cmd>bdelete<cr>", {
 	desc = "Delete buffer",
 })
 
-map("n", "<leader>bo", "<cmd>%bd|e#|bd#<cr>", {
+map("n", "<leader>bo", function()
+	local current = vim.api.nvim_get_current_buf()
+
+	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+		if
+			buf ~= current
+			and vim.api.nvim_buf_is_valid(buf)
+			and vim.bo[buf].buflisted
+			and vim.bo[buf].filetype ~= "NvimTree"
+		then
+			vim.api.nvim_buf_delete(buf, {})
+		end
+	end
+end, {
 	desc = "Delete other buffers",
 })
 
@@ -154,7 +194,6 @@ map("n", "<leader>ca", vim.lsp.buf.code_action, {
 map("n", "<leader>rn", vim.lsp.buf.rename, {
 	desc = "Rename",
 })
-
 -- Diagnostics
 
 map("n", "[d", vim.diagnostic.goto_prev, {
@@ -334,28 +373,6 @@ end, {
 })
 
 -- =========================================================
--- Java / JDTLS
--- =========================================================
-
-map("n", "<leader>jo", function()
-	require("jdtls").organize_imports()
-end, {
-	desc = "Organize imports",
-})
-
-map("n", "<leader>jc", function()
-	require("jdtls").extract_constant()
-end, {
-	desc = "Extract constant",
-})
-
-map("n", "<leader>jm", function()
-	require("jdtls").extract_method()
-end, {
-	desc = "Extract method",
-})
-
--- =========================================================
 -- Aerial
 -- =========================================================
 
@@ -503,6 +520,29 @@ end, {
 	desc = "Close all folds",
 })
 
+-- Chuyển buffer bằng <Space> + số (giống VS Code)
+for i = 1, 9 do
+	vim.keymap.set("n", "<leader>" .. i, function()
+		local ok, bufferline = pcall(require, "bufferline")
+		if ok then
+			bufferline.go_to(i, true)
+		else
+			-- Fallback nếu không có bufferline
+			local bufs = vim.t.bufs or vim.api.nvim_list_bufs()
+			local valid = {}
+			for _, b in ipairs(bufs) do
+				if vim.api.nvim_buf_is_loaded(b) and vim.bo[b].buflisted then
+					table.insert(valid, b)
+				end
+			end
+			if i <= #valid then
+				vim.api.nvim_set_current_buf(valid[i])
+			else
+				vim.notify("Buffer " .. i .. " không tồn tại!", vim.log.levels.WARN)
+			end
+		end
+	end, { noremap = true, silent = true, desc = "Go to buffer " .. i })
+end
 -- =========================================================
 -- Plugins with default mappings / no mapping needed
 -- =========================================================

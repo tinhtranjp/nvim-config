@@ -21,22 +21,22 @@ opt.completeopt = {
 	"popup",
 }
 
-opt.autocomplete = true
+opt.autocomplete = false
 opt.complete = ".,o"
 
 opt.clipboard = "unnamedplus"
 
 vim.g.clipboard = {
-	name = "WSL Clipboard",
+	name = "win32yank",
 
 	copy = {
-		["+"] = "clip.exe",
-		["*"] = "clip.exe",
+		["+"] = "win32yank.exe -i --crlf",
+		["*"] = "win32yank.exe -i --crlf",
 	},
 
 	paste = {
-		["+"] = 'powershell.exe -NoProfile -Command "Get-Clipboard"',
-		["*"] = 'powershell.exe -NoProfile -Command "Get-Clipboard"',
+		["+"] = "win32yank.exe -o --lf",
+		["*"] = "win32yank.exe -o --lf",
 	},
 
 	cache_enabled = 0,
@@ -44,3 +44,6 @@ vim.g.clipboard = {
 
 vim.opt.foldenable = false
 vim.opt.foldlevel = 99
+
+vim.opt.foldmethod = "expr"
+vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
